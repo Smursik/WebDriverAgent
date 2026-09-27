@@ -22,9 +22,12 @@ jobs:
       - name: Package into IPA
         run: |
           cd build/Build/Products/Debug-iphoneos
+          ls -la
           mkdir Payload
-          cp -r WebDriverAgentRunner-Runner.app Payload/ || cp -r *.app Payload/
-          zip -r WebDriverAgentRunner.ipa Payload
+          APP_PATH=$(find . -maxdepth 1 -name "*.app" | head -n 1)
+          echo "Found app: $APP_PATH"
+          cp -r "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload WebDriverAgentRunner.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
