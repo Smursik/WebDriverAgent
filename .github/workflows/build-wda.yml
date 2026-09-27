@@ -7,19 +7,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build & sign WDA
+      - name: Build WDA (unsigned)
         run: |
           xcodebuild build-for-testing \
             -project WebDriverAgent.xcodeproj \
             -scheme WebDriverAgentRunner \
             -destination "generic/platform=iOS" \
-            -allowProvisioningUpdates
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE=""
 
-      - name: Upload build
+      - name: Package into IPA
+        run: |
+          cd build/Build/Products/Debug-iphoneos
+          mkdir Payload
+          cp -r WebDriverAgentRunner-Runner.app Payload/ || cp -r *.app Payload/
+          zip -r WebDriverAgentRunner.ipa Payload
+
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: wda-build
-          path: build/**/*.app
+          name: wda-ipa
+          path: build/Build/Products/Debug-iphoneos/WebDriverAgentRunner.ipa
